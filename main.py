@@ -41,18 +41,18 @@ def main():
 
 def weights(row):
     """
-       Come up with some strategy to determine the weights of each asset in the portfolio.
-       Keep in mind that some assets might be heavily correlated,
-       some might be inversely correlated, and some might be entirely independent.
+    Come up with some strategy to determine the weights of each asset in the portfolio.
+    Keep in mind that some assets might be heavily correlated,
+    some might be inversely correlated, and some might be entirely independent.
 
-       Grading will be done based on Sharpe ratio (a measurement of risk-adjusted returns).
-       Also, keep in mind that you will NOT be graded on this data set --
-       it will be another 1000 candles drawn from the same distribution. This means
-       that while yes, you can look at future results in this dataset to make infinite money,
-       it will likely not be beneficial to do so.
+    Grading will be done based on Sharpe ratio (a measurement of risk-adjusted returns).
+    Also, keep in mind that you will NOT be graded on this data set --
+    it will be another 1000 candles drawn from the same distribution. This means
+    that while yes, you can look at future results in this dataset to make infinite money,
+    it will likely not be beneficial to do so.
 
-       Good luck everyone!
-       """
+    Good luck everyone!
+    """
     DAG_df = pd.read_csv("CSVs/DAG_part1.csv")
     KOP_df = pd.read_csv("CSVs/KOP_part1.csv")
     MON_df = pd.read_csv("CSVs/MON_part1.csv")
@@ -61,15 +61,36 @@ def weights(row):
     TAW_df = pd.read_csv("CSVs/TAW_part1.csv")
     TOW_df = pd.read_csv("CSVs/TOW_part1.csv")
     YON_df = pd.read_csv("CSVs/YON_part1.csv")
-    # Above are pandas data frames for the individual stocks. We recommend using these to calculate the weights.
 
-    # This is just a simple example where all assets are equally weighted.
-    number_assets = 8
-    weights = [1/number_assets for _ in range(number_assets)]
+    def get_np_returns(df):
+        closes = df["C"].values
+        returns = (closes[1:] - closes[:-1]) / closes[:-1]
+        return returns
 
-    # please return the weights as a numpy array
-    return np.array(weights)
+    DAG_rets = get_np_returns(DAG_df)
+    KOP_rets = get_np_returns(KOP_df)
+    MON_rets = get_np_returns(MON_df)
+    PED_rets = get_np_returns(PED_df)
+    PUG_rets = get_np_returns(PUG_df)
+    TAW_rets = get_np_returns(TAW_df)
+    TOW_rets = get_np_returns(TOW_df)
+    YON_rets = get_np_returns(YON_df)
+    
+    returns_matrix = np.column_stack([
+        DAG_rets, KOP_rets, MON_rets, PED_rets,
+        PUG_rets, TAW_rets, TOW_rets, YON_rets
+    ])
 
+    mu = np.mean(returns_matrix, axis=0)          
+    Sigma = np.cov(returns_matrix, rowvar=False)  
+
+    inv_Sigma = np.linalg.pinv(Sigma)
+    w_unnormalized = (inv_Sigma @ mu)
+
+    if np.allclose(w_unnormalized, 0):
+        w_unnormalized = np.ones_like(mu)
+    weights = w_unnormalized / np.sum(w_unnormalized)
+    return weights
 
 
 main()
